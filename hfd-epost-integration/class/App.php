@@ -194,8 +194,8 @@ class App
 			'meta_key'	=> 'hfd_sync_flag',
 			'meta_compare' => 'NOT EXISTS',
 			'date_query' => array(
-				'after' => date( 'Y-m-d H:i:s', strtotime( '-'.( $hfd_auto_sync_time + 10 ).' minutes' ) ),
-				'before' => date( 'Y-m-d H:i:s', strtotime( '-'.$hfd_auto_sync_time.' minutes' ) )
+				'after' => wp_date( 'Y-m-d H:i:s', strtotime( '-'.( $hfd_auto_sync_time + 10 ).' minutes' ) ),
+				'before' => wp_date( 'Y-m-d H:i:s', strtotime( '-'.$hfd_auto_sync_time.' minutes' ) )
 			),
 		);
 		$orderIds = wc_get_orders( $args );

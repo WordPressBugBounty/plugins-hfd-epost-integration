@@ -136,11 +136,23 @@
 
       var _this = this;
       _this.showLoader();
+	  if( $j( '.wc-block-checkout__form' ).length ){
+		$j( "#israelpost-additional" ).addClass('processing').block({
+			message: null,
+			overlayCSS: {
+				background: '#fff',
+				opacity: 0.6
+			}
+		});
+	  }
       $j.get(serviceUrl, function (response) {
         var spots = response,
             locations = {};
 
         _this.hideLoader();
+		if( $j( '.wc-block-checkout__form' ).length ){
+			$j( "#israelpost-additional" ).removeClass( 'processing' ).unblock();
+		}
         if (!Object.keys(spots).length) {
           return _this.reloadLocations(locations)
         }
@@ -153,7 +165,7 @@
           locations[i] = spot.name + ' - ' + spot.street + ' ' + spot.house + ' - ' + spot.city;
         }
 
-        _this.reloadLocations(locations)
+        _this.reloadLocations(locations);
       });
     },
 

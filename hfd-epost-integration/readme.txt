@@ -3,8 +3,8 @@ Contributors: oninitay, hfdepost
 Tags: woocommerce, sync, hfd, epost, shipping
 Donate link: 
 Requires at least: 4.0
-Tested up to: 6.7
-Stable tag: 2.16
+Tested up to: 6.8
+Stable tag: 2.17
 Requires PHP: 5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -123,6 +123,11 @@ HFD - ws.hfd.co.il
 
 = 2.16 =
 * Performance Improvement
+
+= 2.17 =
+* Performance Improvement
+* select box design issue fixed
+* added wp_date function instead of date
 
 == Frequently Asked Questions ==
 = Why Google Maps isnt loading =

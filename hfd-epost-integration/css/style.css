@@ -240,7 +240,9 @@ nav {
 .gm-style .gm-style-iw-d{
 	overflow: auto !important;
 }
-
+.spot-list-container .select2-container{
+	width: 100% !important;
+}
 @media only screen and (max-width: 767px){
     #legend {
         display: none !important;
