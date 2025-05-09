@@ -13,7 +13,8 @@ class Epost extends \WC_Shipping_Method
 
     /** @var string cost passed to [fee] shortcode */
     protected $fee_cost = '';
-
+	
+	public $cost, $free_shipping_over;
     /**
      * Constructor.
      *

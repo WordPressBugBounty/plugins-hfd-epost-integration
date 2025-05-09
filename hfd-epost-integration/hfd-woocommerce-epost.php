@@ -4,7 +4,7 @@ Plugin Name: HFD ePost Integration
 Requires Plugins: woocommerce
 Plugin URI:
 Description: Add shipping method of ePost, allowing the user on the checkout, to select the pickup location point from a google map popup. Also allows to synch the order to HFD API after the order is created.
-Version: 2.17
+Version: 2.18
 Author: HFD
 Author URI: https://www.hfd.co.il
 License: GPLv2 or later
