@@ -132,6 +132,9 @@ HFD - ws.hfd.co.il
 = 2.18 =
 * Performance Improvement
 
+= 2.19 =
+* Performance Improvement
+
 == Frequently Asked Questions ==
 = Why Google Maps isnt loading =
 Need to add Google map API key

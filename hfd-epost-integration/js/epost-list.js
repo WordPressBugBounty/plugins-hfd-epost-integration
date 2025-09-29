@@ -112,11 +112,14 @@
 						nnth++;
 						return (nnth === 2) ? ")" : match;
 					});
-					option = $j( '<option>', { value: city, text: city } );
-					if( selected && selected === city ){
-						option.attr('selected', 'selected');
+					var exists = select.find("option").filter(function (i, o) { return o.value === city; }).length > 0;
+					if( !exists ){
+						option = $j( '<option>', { value: city, text: city } );
+						if( selected && selected === city ){
+							option.attr('selected', 'selected');
+						}
+						select.append( option );
 					}
-					select.append( option );
 				}
 			}
 		}
