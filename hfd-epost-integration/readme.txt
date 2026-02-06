@@ -3,8 +3,8 @@ Contributors: oninitay, hfdepost
 Tags: woocommerce, sync, hfd, epost, shipping
 Donate link: 
 Requires at least: 4.0
-Tested up to: 6.8
-Stable tag: 2.18
+Tested up to: 6.9
+Stable tag: 2.20
 Requires PHP: 5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -133,6 +133,9 @@ HFD - ws.hfd.co.il
 * Performance Improvement
 
 = 2.19 =
+* Performance Improvement
+
+= 2.20 =
 * Performance Improvement
 
 == Frequently Asked Questions ==
