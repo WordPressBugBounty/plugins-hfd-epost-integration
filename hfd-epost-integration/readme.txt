@@ -3,8 +3,8 @@ Contributors: oninitay, hfdepost
 Tags: woocommerce, sync, hfd, epost, shipping
 Donate link: 
 Requires at least: 4.0
-Tested up to: 6.9
-Stable tag: 2.20
+Tested up to: 7.0
+Stable tag: 2.21
 Requires PHP: 5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -59,7 +59,6 @@ use custom jquery ui -
 אם בוחרים YES- זה ישתמש ב- JQUERY U של הפלאגין
 
 לבחור NO.
-
 הפעלת הסנכרון בין WooCommerce ומערכת HFD
 
 כדי לשלוח הזמנות למערכת HFD, ב- WooCommerce יש לעבור לרשימת ההזמנות,
@@ -137,6 +136,10 @@ HFD - ws.hfd.co.il
 
 = 2.20 =
 * Performance Improvement
+
+= 2.21 =
+* עדכון API
+
 
 == Frequently Asked Questions ==
 = Why Google Maps isnt loading =

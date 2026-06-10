@@ -22,29 +22,7 @@ class Spot
             return $spots;
         }
 		
-		$args = array(
-			'timeout' => 15,
-			'sslverify' => false
-		);
-		
-		// add bearer token into request
-        $setting = Container::get('Hfd\Woocommerce\Setting');
-        $authToken = $setting->get('betanet_epost_hfd_auth_token');
-        if( $authToken ){
-			$args['headers'] = array( 'Authorization' => 'Bearer '.$authToken );
-        }
-		$response = wp_remote_get( $this->getServiceUrl(), $args );
-		$response = wp_remote_retrieve_body( $response );
-		
-        $xml = simplexml_load_string( $response, 'SimpleXMLElement', LIBXML_NOCDATA );
-        $arrResponse = json_decode(wp_json_encode($xml), true);
-		
-        $spots = array();
-        if( isset( $arrResponse['spots']['spot_detail'] ) && !empty( $arrResponse['spots']['spot_detail'] ) ){
-            foreach( $arrResponse['spots']['spot_detail'] as $spot ){
-                $spots[$spot['n_code']] = $spot;
-            }
-        }
+        $spots = $this->requestSpots();
 
         $this->saveCache( $spots );
 
@@ -60,26 +38,7 @@ class Spot
             return $spots;
         }
 		
-		$args = array(
-			'timeout' => 15,
-			'sslverify' => false
-		);
-		$response = wp_remote_get( $this->getServiceUrl( $city ), $args );
-		$response = wp_remote_retrieve_body( $response );
-		
-        $xml = simplexml_load_string( $response, 'SimpleXMLElement', LIBXML_NOCDATA );
-        $arrResponse = json_decode( wp_json_encode( $xml ), true );
-
-        $spots = array();
-        if (empty($arrResponse['message']) && !empty($arrResponse['spots']['spot_detail'])) {
-            $_spots = $arrResponse['spots']['spot_detail'];
-            if (!empty($_spots['n_code'])) {
-                $_spots = array($_spots);
-            }
-            foreach ($_spots as $spot) {
-                $spots[$spot['n_code']] = $spot;
-            }
-        }
+        $spots = $this->requestSpots($city);
 
         $cache->save($cacheKey, $spots);
 
@@ -112,14 +71,7 @@ class Spot
     public function getServiceUrl($city = 'all')
     {
         $setting = Container::get('Hfd\Woocommerce\Setting');
-        $url = $setting->get('betanet_epost_service_url');
-        $parsed = parse_url($url);
-
-        parse_str($parsed['query'], $query);
-        $query['ARGUMENTS'] = '-A'. ($city ? $city : 'all');
-        $url = $parsed['scheme'] . '://' . $parsed['host'] . $parsed['path'] . '?' . http_build_query($query);
-
-        return $url;
+        return $setting->get('betanet_epost_service_url');
     }
 
     public function getCities()
@@ -146,5 +98,106 @@ class Spot
 
         sort($this->cities);
         return $this->cities;
+    }
+
+    protected function requestSpots($city = '')
+    {
+        $setting = Container::get('Hfd\Woocommerce\Setting');
+        $authToken = $setting->get('betanet_epost_hfd_auth_token');
+        $clientId = (string) $setting->get('betanet_epost_hfd_customer_number');
+
+        if (empty($authToken) || empty($clientId)) {
+            return array();
+        }
+
+        $payload = array(
+            'clientId' => $clientId,
+            'city' => $city ? $city : '',
+            'shipmentDirection' => 'מסירה',
+            'language' => 'HE',
+            'street' => '',
+            'openingHoursFormat' => false,
+        );
+
+        $args = array(
+            'timeout' => 15,
+            'sslverify' => false,
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $authToken,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ),
+            'body' => wp_json_encode($payload),
+        );
+
+        $response = wp_remote_post($this->getServiceUrl($city), $args);
+        if (is_wp_error($response)) {
+            return array();
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        $decoded = json_decode($body, true);
+        if (!is_array($decoded)) {
+            return array();
+        }
+
+        $spots = array();
+        foreach ($decoded as $spot) {
+            if (!is_array($spot)) {
+                continue;
+            }
+            $normalized = $this->normalizeSpot($spot);
+            if (!empty($normalized['n_code'])) {
+                $spots[$normalized['n_code']] = $normalized;
+            }
+        }
+
+        return $spots;
+    }
+
+    protected function normalizeSpot($spot)
+    {
+        $openingHours = '';
+        if (!empty($spot['openingHours']) && is_array($spot['openingHours'])) {
+            $parts = array();
+            foreach ($spot['openingHours'] as $day) {
+                if (empty($day['day'])) {
+                    continue;
+                }
+
+                if (!empty($day['trading'])) {
+                    $parts[] = sprintf('%s %s-%s', $day['day'], $day['open'], $day['close']);
+                } else {
+                    $parts[] = sprintf('%s %s', $day['day'], __('Closed', 'hfd-integration'));
+                }
+            }
+            $openingHours = implode(', ', $parts);
+        }
+
+        $remarks = '';
+        if (!empty($spot['spotRemarks'])) {
+            $remarks = $spot['spotRemarks'];
+        } elseif ($openingHours) {
+            $remarks = $openingHours;
+        }
+
+        return array(
+            'n_code' => isset($spot['spotId']) ? (string) $spot['spotId'] : '',
+            'name' => isset($spot['spotName']) ? $spot['spotName'] : '',
+            'type' => isset($spot['spotType']) ? $spot['spotType'] : '',
+            'city' => isset($spot['city']) ? $spot['city'] : '',
+            'street' => isset($spot['street']) ? $spot['street'] : '',
+            'house' => isset($spot['houseNo']) ? $spot['houseNo'] : '',
+            'remarks' => $remarks,
+            'latitude' => isset($spot['latitude']) ? $spot['latitude'] : '',
+            'longitude' => isset($spot['longitude']) ? $spot['longitude'] : '',
+            'city_code' => '',
+            'street_code' => '',
+            'mesirot_yn' => '',
+            'ahzarot_yn' => '',
+            'spotAddress' => isset($spot['spotAddress']) ? $spot['spotAddress'] : '',
+            'spotDistanceText' => isset($spot['spotDistanceText']) ? $spot['spotDistanceText'] : '',
+            'sortingCode' => isset($spot['sortingCode']) ? $spot['sortingCode'] : '',
+        );
     }
 }

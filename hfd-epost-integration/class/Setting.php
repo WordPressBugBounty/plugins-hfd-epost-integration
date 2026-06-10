@@ -33,17 +33,17 @@ class Setting extends DataObject
     public function initDefaultSetting()
     {
         $_settings = array(
-            'betanet_epost_service_url' => 'https://ws.hfd.co.il/RunCom.Server/Request.aspx?APPNAME=run&PRGNAME=ws_spotslist&ARGUMENTS=-Aall',
+            'betanet_epost_service_url' => 'https://api.hfd.co.il/rest/v2/epost-points/get-list-by-address',
             'betanet_epost_google_api_key' => '',
             'betanet_epost_hfd_active' => 1,
             'betanet_epost_hfd_service_url' => 'https://ws.hfd.co.il/RunCom.Server/Request.aspx',
             'betanet_epost_hfd_shipping_method' => array(\Hfd\Woocommerce\Shipping\Epost::METHOD_ID),
             'betanet_epost_hfd_sender_name' => 'default',
             'betanet_epost_hfd_customer_number' => 0,
-            'betanet_epost_hfd_print_pdf_url' => 'https://ws.hfd.co.il/RunCom.Server/Request.aspx?APPNAME=run&PRGNAME=ship_print_ws&ARGUMENTS=-N{shipping_number}',
-			'betanet_epost_hfd_track_shipment_url' => 'https://ws.hfd.co.il/RunCom.Server/Request.aspx?APPNAME=run&PRGNAME=ship_locate_random&ARGUMENTS=-A{RAND}',
-			'betanet_epost_hfd_cancel_shipment_url' => 'https://ws.hfd.co.il/RunCom.Server/Request.aspx?APPNAME=run&PRGNAME=bitul_mishloah&ARGUMENTS=-A{shipping_number},-A,-A,-A,-N',
-			'betanet_epost_hfd_print_label_url' => 'https://ws.hfd.co.il/RunCom.Server/Request.aspx?APPNAME=run&PRGNAME=ship_print_ws&ARGUMENTS=-N{RAND}',
+            'betanet_epost_hfd_print_pdf_url' => 'https://api.hfd.co.il/rest/v2/shipments/{shipping_number}/label',
+			'betanet_epost_hfd_track_shipment_url' => 'https://run.hfd.co.il/info/{RAND}',
+			'betanet_epost_hfd_cancel_shipment_url' => 'https://api.hfd.co.il/rest/v2/shipments/{shipping_number}',
+			'betanet_epost_hfd_print_label_url' => 'https://api.hfd.co.il/rest/v2/shipments/{shipping_number}/label',
 			'hfd_order_auto_sync' => 'no',
 			'hfd_sync_order_items' => 'no',
 			'hfd_take_varaible_sku' => 'no',

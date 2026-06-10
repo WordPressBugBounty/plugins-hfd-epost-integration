@@ -32,6 +32,8 @@
 					});
 				},
 			});
+
+			this.autoOpenSelectors();
 		}
     },
 
@@ -169,6 +171,7 @@
         }
 
         _this.reloadLocations(locations);
+		_this.autoOpenSpotPicker();
       });
     },
 
@@ -408,6 +411,62 @@
       if ($j.fn.select2) {
         this.additonalBlock.find('select').select2();
       }
+    },
+
+	isEpostSelected: function () {
+	  if (this.shippingInput.length && this.shippingInput.is(':checked')) {
+		return true;
+	  }
+
+	  var blockShip = $j( ".wc-block-components-radio-control__option input[id*='betanet_epost']" );
+	  return blockShip.length && blockShip.is(":checked");
+	},
+
+	autoOpenSelectors: function () {
+	  var _this = this;
+	  if (!this.isEpostSelected()) {
+		return;
+	  }
+
+	  setTimeout(function () {
+		_this.autoOpenCityPicker();
+	  }, 150);
+	},
+
+	autoOpenCityPicker: function () {
+	  if (!this.isEpostSelected()) {
+		return;
+	  }
+
+	  var cityList = this.additonalBlock.find('#city-list');
+	  if (!cityList.length || cityList.val()) {
+		return;
+	  }
+
+	  if (this.cityJsuite && typeof this.cityJsuite.open === 'function') {
+		this.cityJsuite.open();
+	  } else if (cityList.data('select2') && typeof cityList.select2 === 'function') {
+		cityList.select2('open');
+	  }
+	},
+
+	autoOpenSpotPicker: function () {
+	  if (!this.isEpostSelected()) {
+		return;
+	  }
+
+	  var spotList = this.additonalBlock.find('#spot-list');
+	  if (!spotList.length || !spotList.find('option').length || spotList.val()) {
+		return;
+	  }
+
+	  setTimeout(function () {
+		if (window.EpostList.spotJsuite && typeof window.EpostList.spotJsuite.open === 'function') {
+		  window.EpostList.spotJsuite.open();
+		} else if (spotList.data('select2') && typeof spotList.select2 === 'function') {
+		  spotList.select2('open');
+		}
+	  }, 150);
     }
   }
 
@@ -430,7 +489,7 @@
 						cities: obj.cities
 					});
 
-					jSuites.dropdown(document.getElementById('city-list'),{
+					window.EpostList.cityJsuite = jSuites.dropdown(document.getElementById('city-list'),{
 						onchange: function( el, data ) {
 							$j.each( data.value, function( index, el ){
 								$j( '#city-list option[value="'+index+'"]' ).attr( 'selected','selected' );
@@ -441,6 +500,8 @@
 						autocomplete: true,
 						width:'100%'
 					});
+
+					window.EpostList.autoOpenSelectors();
 				}
 			});
 		}
@@ -450,6 +511,9 @@
 		var blockShip = $j( ".wc-block-components-radio-control__option input[id*='betanet_epost']" );
 		if( blockShip.length && blockShip.is( ":checked" ) ){
 			$j('#israelpost-additional').show();
+			if( window.EpostList ){
+				window.EpostList.autoOpenSelectors();
+			}
 		}else{
 			$j('#israelpost-additional').hide();
 		}

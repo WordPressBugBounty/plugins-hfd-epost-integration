@@ -72,32 +72,32 @@ class Admin
 				$cancel_shipment_url = $helper->get( 'betanet_epost_hfd_cancel_shipment_url' );
 				$cancel_shipment_url = str_replace( "{shipping_number}", $orN, $cancel_shipment_url );
 				$args = array(
+					'method' => 'DELETE',
 					'headers' => array(
-						'Authorization' => 'Bearer '.$authToken
+						'Authorization' => 'Bearer '.$authToken,
+						'Accept' => 'application/json',
 					),
 					'sslverify' => false
 				);
-				$response_run = wp_remote_get( $cancel_shipment_url, $args );
+				$response_run = wp_remote_request( $cancel_shipment_url, $args );
 				$api_response_run = wp_remote_retrieve_body( $response_run );
-				$api_response_run = simplexml_load_string( $api_response_run );
-				if( $api_response_run === false ){
+				$api_response_run = json_decode( $api_response_run, true );
+				if( !is_array( $api_response_run ) ){
 					$out = array( "success" => 0, "msg" => __( "Shipment not tracked", 'hfd-integration' ) );
 				}else{
-					$api_response_run  = wp_json_encode( $api_response_run );
-					$api_response_run = json_decode( $api_response_run, true );
 					update_post_meta( $orderID, 'hfd_ship_cancel_response', maybe_serialize( $api_response_run ) );
-					if( isset( $api_response_run['Status'] ) && $api_response_run['Status'] == "OK" ){
+					if( isset( $api_response_run['status'] ) && strtoupper( $api_response_run['status'] ) == "OK" ){
 						$corder = wc_get_order( $orderID );
 						if( $corder ){
 							$corder->add_order_note( __( "HFD shipment cancelled", 'hfd-integration' ) );
 						}
-						$out = array( "success" => 0, "msg" => __( "HFD shipment cancelled", 'hfd-integration' ) );
-					}else if( isset( $api_response_run['Status'] ) && $api_response_run['Status'] == "ERROR" ){
+						$out = array( "success" => 1, "msg" => __( "HFD shipment cancelled", 'hfd-integration' ) );
+					}else if( isset( $api_response_run['status'] ) && strtoupper( $api_response_run['status'] ) == "ERROR" ){
 						$corder = wc_get_order( $orderID );
 						if( $corder ){
-							$corder->add_order_note( sprintf( __( "HFD shipment cancelled error : %s", 'hfd-integration' ), $api_response_run['Status_desc'] ) );
+							$corder->add_order_note( sprintf( __( "HFD shipment cancelled error : %s", 'hfd-integration' ), $api_response_run['status_desc'] ) );
 						}
-						$out = array( "success" => 0, "msg" => $api_response_run['Status_desc'] );
+						$out = array( "success" => 0, "msg" => $api_response_run['status_desc'] );
 					}
 				}
 			}else{
@@ -124,7 +124,7 @@ class Admin
 		if( $hfd_sync_flag ){
 			$helper = \Hfd\Woocommerce\Container::get('Hfd\Woocommerce\Setting');
 			$shipment_track_url = $helper->get( 'betanet_epost_hfd_track_shipment_url' );
-			$shipment_track_url = str_replace( "{RAND}", $hfd_rand_number, $shipment_track_url );
+			$shipment_track_url = str_replace( "{RAND}", rawurlencode( $hfd_rand_number ), $shipment_track_url );
 		?>
 			<a href="<?php echo esc_html( $shipment_track_url ); ?>" target="_blank" style="<?php echo ( $hfd_rand_number == "" ) ? "pointer-events: none;" : ""; ?>"><button type="button" class="button epost-check-shipment-status" <?php echo ( $hfd_rand_number == "" ) ? "disabled" : ""; ?>><?php esc_html_e( 'Check Status', 'hfd-integration' ); ?></button></a>
 			<button type="button" class="button epost-cancel-shipment" data-id="<?php echo esc_html( $post->ID ); ?>" data-text="<?php echo esc_html( $hfd_rand_number ); ?>" <?php echo ( $hfd_rand_number == "" ) ? "disabled" : ""; ?>><?php esc_html_e( 'Cancel Shipment', 'hfd-integration' ); ?></button>

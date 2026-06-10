@@ -64,9 +64,9 @@ class Api
 					
 					$product = wc_get_product( $pid );
 					$orderItems[] = array(
-						'Code' 			=> $product->get_sku(),
-						'Quantity'		=> $item['quantity'],
-						'DeliveryCollect' => 'מסירה'
+						'code' => $product ? $product->get_sku() : '',
+						'quantity' => (int) $item['quantity'],
+						'deliveryCollect' => 'מסירה'
 					);
 				}
 			}
@@ -74,27 +74,29 @@ class Api
 		
 		//create hfd array
 		$pParam = array(
-			'ClientNumber'			=> $this->getCustomerNumber(),
-			'MesiraIsuf'			=> $this->_getParam2( $order ),
-			'ShipmentTypeCode'		=> $param3,
-			'CargoTypeHaloch'		=> $param7,
-			'AddressRemarks'		=> $street,
-			'ShipmentRemarks'		=> $order->get_customer_note(),
-			'StageCode'				=> $this->_getParam8( $order ),
-			'PudoCodeDestination'	=> $this->_getParam35( $order ),
-			'OrdererName'			=> $this->getSenderName(),
-			'HouseNum'				=> $houseNumber,
-			'Apartment'				=> $aparment,
-			'Floor'					=> $floor,
-			'Entrance'				=> $entrance,
-			'NameTo'				=> $userName,
-			'StreetName'			=> $street,
-			'CityName'				=> $shippingCity,
-			'TelFirst'				=> $user_phone,
-			'StreetCode'			=> '',
-			'ReferenceNum1'			=> $orderNumber,	
-			'Email'					=> $order->get_billing_email(),
-			'ProductsPrice'			=> $this->_getParam31( $order )
+			'clientNumber' => (int) $this->getCustomerNumber(),
+			'mesiraIsuf' => $this->_getParam2( $order ),
+			'shipmentTypeCode' => (int) $param3,
+			'cargoTypeHaloch' => (int) $param7,
+			'addressRemarks' => $street,
+			'shipmentRemarks' => $order->get_customer_note(),
+			'stageCode' => $this->_getParam8( $order ) === '' ? null : (int) $this->_getParam8( $order ),
+			'pudoCodeDestination' => $this->_getParam35( $order ) === '' ? 0 : (int) $this->_getParam35( $order ),
+			'ordererName' => $this->getSenderName(),
+			'houseNum' => $houseNumber,
+			'apartment' => $aparment,
+			'floor' => $floor,
+			'entrance' => $entrance,
+			'nameTo' => $userName,
+			'streetName' => $street,
+			'cityName' => $shippingCity,
+			'telFirst' => $user_phone,
+			'streetCode' => '',
+			'referenceNum1' => (string) $orderNumber,
+			'email' => $order->get_billing_email(),
+			'productsPrice' => (float) $this->_getParam31( $order ),
+			'packsHaloch' => '1',
+			'cargoTypeHazor' => $cargohazor === '' ? 0 : (int) $cargohazor,
 		);
 		
 		//add cargoHazor if govina
@@ -109,7 +111,7 @@ class Api
 		
 		//send order items only if yes selected
 		if( $hfd_sync_order_items == "yes" ){
-			$pParam['OrderItems'] = $orderItems;
+			$pParam['orderItems'] = $orderItems;
 		}
 		
 		$pParam = apply_filters( 'hfd_before_sync', $pParam );
@@ -127,17 +129,19 @@ class Api
 				'timeout' => 15,
 				'user-agent' => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13',
 				'sslverify' => false,
-				'body' => json_encode( $pParam )
+				'body' => wp_json_encode( $pParam )
 			);
 			// add bearer token into request
             if( $authToken ){
 				$args['headers'] = array(
 					'Authorization' => 'Bearer '.$authToken,
-					'Content-Type'  => 'application/json'
+					'Content-Type'  => 'application/json',
+					'Accept' => 'application/json'
 				);
 			}else{
 				$args['headers'] = array(
-					'Content-Type'  => 'application/json'
+					'Content-Type'  => 'application/json',
+					'Accept' => 'application/json'
 				);
 			}
 			
@@ -147,17 +151,21 @@ class Api
                 throw new \Exception('Fail to connect API');
             }
 						
-			$response = wp_remote_retrieve_body( $response );
-            $arrResponse = json_decode( $response, true );
+			$responseCode = wp_remote_retrieve_response_code( $response );
+			$responseBody = wp_remote_retrieve_body( $response );
+            $arrResponse = json_decode( $responseBody, true );
 
             if( $this->isApiDebug() ){
                 $_response = $arrResponse;
                 if( is_array( $_response ) ){
                     $_response = wp_json_encode( $_response );
+				}else{
+					$_response = $responseBody;
                 }
                 $_logInfo = PHP_EOL .'===== Begin =====';
                 $_logInfo .= PHP_EOL . '> Request parameters: '. wp_json_encode( $pParam );
                 $_logInfo .= PHP_EOL .'> Call API: '. $url;
+                $_logInfo .= PHP_EOL .'> HTTP status: '. $responseCode;
                 $_logInfo .= PHP_EOL .'> Response: '. $_response;
                 $_logInfo .= PHP_EOL .'====== End ======';
                 $filesystem = Container::get( 'Hfd\Woocommerce\Filesystem' );
@@ -170,9 +178,12 @@ class Api
             }else if( isset( $arrResponse['errorMessage'] ) ){
 				$result['error'] = true;
                 $result['message'] = $arrResponse['errorMessage'];
+			}else if( isset( $arrResponse['details'] ) ){
+				$result['error'] = true;
+                $result['message'] = $arrResponse['details'];
 			}else{
                 $result['error'] = true;
-                $result['message'] = __( 'Something went wrong', 'hfd-integration' );
+                $result['message'] = $responseBody ? $responseBody : __( 'Something went wrong', 'hfd-integration' );
             }
             return $result;
         } catch (\Exception $e) {
